@@ -820,9 +820,9 @@
      ضع قيمتين عامتين فقط (آمن نشرهما):  SUPABASE_URL و SUPABASE_ANON_KEY
      لا تضع service_role ولا أي مفتاح سري هنا أبدًا.
      ================================================================ */
-  const SUPABASE_URL = '';
-  const SUPABASE_ANON_KEY = '';
-  const sb = (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase)
+  const SUPABASE_URL = 'https://ahsurdptglcodoodyuxo.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFoc3VyZHB0Z2xjb2Rvb2R5dXhvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMzNzgyNzgsImV4cCI6MjEwODk1NDI3OH0.HwEnsTsfqDWCa8aHAZmFJ0MeCkdDuD3jkGgKuCxaIek';
+  const sb = (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase && window.supabase.createClient)
     ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { flowType: 'pkce', persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } })
     : null;
   let session = null, sbUser = null;
@@ -896,10 +896,15 @@
 
   const loadingHTML = '<div class="ch-card center"><p class="muted">جارٍ التحميل…</p></div>';
   const errHTML = msg => `<div class="status error"><span>${esc(msg)}</span><button class="btn small" type="button" data-act="ch-reload">إعادة المحاولة</button></div>`;
-  const notReadyHTML = `<div class="ch-card">
-      <h2>الخدمة غير مهيأة بعد</h2>
-      <p>لم يُربط الموقع بقاعدة البيانات بعد، لذلك لا يمكن تشغيل التحدي ولا حفظ النقاط. اتبع خطوات ملف <b>SETUP-AR.md</b> لإنشاء مشروع Supabase ثم ضع قيمتي <code>SUPABASE_URL</code> و<code>SUPABASE_ANON_KEY</code> في <code>script.js</code>.</p>
-    </div>`;
+  const notReadyHTML = () => {
+    const keysOk = !!(SUPABASE_URL && SUPABASE_ANON_KEY);
+    const why = !keysOk
+      ? 'لم تُضبط قيمتا <code>SUPABASE_URL</code> و<code>SUPABASE_ANON_KEY</code> في <code>script.js</code>.'
+      : !window.supabase
+        ? 'تعذّر تحميل مكتبة Supabase من <code>cdn.jsdelivr.net</code>. عطّل مانع الإعلانات أو الخصوصية للموقع ثم حدّث الصفحة، أو جرّب شبكة أخرى.'
+        : 'تعذّر إنشاء الاتصال بالخدمة. افتح Console (F12) وأرسل الخطأ الظاهر.';
+    return `<div class="ch-card"><h2>الخدمة غير مهيأة بعد</h2><p>${why}</p></div>`;
+  };
   const loginHTML = `<div class="ch-card center">
       <h2>سجّل الدخول لتبدأ</h2>
       <p class="muted">يُحفظ تقدمك ونقاطك في حسابك فتبقى معك عند تغيير الجهاز. لا يظهر بريدك ولا اسمك الحقيقي لأحد، وتتنافس باسم مستعار.</p>
@@ -908,7 +913,7 @@
 
   function showChallenge(sub) {
     $$('.subtabs a').forEach(a => a.classList.toggle('active', a.dataset.sub === (sub === 'play' ? '' : sub)));
-    if (!sb) { body().innerHTML = notReadyHTML; return; }
+    if (!sb) { body().innerHTML = notReadyHTML(); return; }
     if (sub === 'board') return renderBoard();
     if (!session) { body().innerHTML = loginHTML; return; }
     if (sub === 'play') { if (!quiz) { location.replace('#challenge'); return; } return renderQuestion(); }
